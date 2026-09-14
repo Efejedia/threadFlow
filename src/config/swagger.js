@@ -5,7 +5,12 @@ const swaggerSpec = {
     version: '1.0.0',
     description: 'Fashion studio ops — owner auth, staff PIN login, roster',
   },
-  servers: [{ url: 'http://localhost:5000' }],
+  servers: [
+    {
+      url: process.env.SERVER_URL || 'http://localhost:5000',
+      description: process.env.SERVER_URL ? 'Production' : 'Local',
+    },
+  ],
   components: {
     securitySchemes: {
       bearerAuth: {
