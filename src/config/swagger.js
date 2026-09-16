@@ -20,7 +20,7 @@ const swaggerSpec = {
       },
     },
   },
-  paths: {
+    paths: {
     '/api/auth/owner/register': {
       post: {
         tags: ['Auth — Owner'],
@@ -121,6 +121,85 @@ const swaggerSpec = {
         tags: ['Staff roster'],
         security: [{ bearerAuth: [] }],
         responses: { 201: { description: 'Created' } },
+      },
+    },
+
+    // ===== ORDERS & STEPS (add these) =====
+    '/api/orders': {
+      post: {
+        tags: ['Orders'],
+        summary: 'Create order + auto-assign steps (owner)',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['clientName', 'itemDescription', 'deadline'],
+                properties: {
+                  clientName: { type: 'string', example: 'Chioma Okeke' },
+                  itemDescription: {
+                    type: 'string',
+                    example: 'Agbada — navy, embroidery',
+                  },
+                  deadline: {
+                    type: 'string',
+                    format: 'date',
+                    example: '2026-09-25',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: { 201: { description: 'Order + steps created' } },
+      },
+      get: {
+        tags: ['Orders'],
+        summary: 'List orders (owner)',
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'OK' } },
+      },
+    },
+    '/api/orders/{id}': {
+      get: {
+        tags: ['Orders'],
+        summary: 'Order detail + steps (owner)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: 'path',
+            name: 'id',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: { 200: { description: 'OK' } },
+      },
+    },
+    '/api/steps/mine': {
+      get: {
+        tags: ['Steps'],
+        summary: 'My open steps (staff)',
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'OK' } },
+      },
+    },
+    '/api/steps/{id}/complete': {
+      patch: {
+        tags: ['Steps'],
+        summary: 'Mark step done (staff)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: 'path',
+            name: 'id',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: { 200: { description: 'Completed' } },
       },
     },
   },
