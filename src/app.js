@@ -23,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/orders', require('./routes/order.routes'));
 app.use('/api/steps', require('./routes/step.routes'));
+app.use('/api/reports', require('./routes/report.routes'));
 
 app.use((err, req, res, next) => {
   console.error(err);

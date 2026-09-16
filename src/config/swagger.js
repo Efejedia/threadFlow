@@ -202,6 +202,20 @@ const swaggerSpec = {
         responses: { 200: { description: 'Completed' } },
       },
     },
+    '/api/reports/speed': {
+  get: {
+    tags: ['Reports'],
+    summary: 'Speed report + bottlenecks (owner)',
+    description:
+      'Averages per step type, per staff, per order, plus bottleneck flags and current workload',
+    security: [{ bearerAuth: [] }],
+    responses: {
+      200: { description: 'Speed report' },
+      401: { description: 'Unauthorized' },
+      403: { description: 'Owners only' },
+    },
+  },
+},
   },
 };
 
