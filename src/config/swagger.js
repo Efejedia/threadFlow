@@ -3,7 +3,8 @@ const swaggerSpec = {
   info: {
     title: 'ThreadFlow API',
     version: '1.0.0',
-    description: 'Fashion studio ops — owner auth, staff PIN login, roster',
+    description:
+      'Fashion studio ops — owner auth, staff PIN login, roster, orders, steps, reports, Swift Agent',
   },
   servers: [
     {
@@ -20,7 +21,7 @@ const swaggerSpec = {
       },
     },
   },
-    paths: {
+  paths: {
     '/api/auth/owner/register': {
       post: {
         tags: ['Auth — Owner'],
@@ -124,7 +125,7 @@ const swaggerSpec = {
       },
     },
 
-    // ===== ORDERS & STEPS (add these) =====
+    // ===== ORDERS & STEPS =====
     '/api/orders': {
       post: {
         tags: ['Orders'],
@@ -178,6 +179,26 @@ const swaggerSpec = {
         responses: { 200: { description: 'OK' } },
       },
     },
+    '/api/orders/{id}/assign': {
+      post: {
+        tags: ['Orders', 'Agent'],
+        summary: 'Re-run step assignment agent for an order (owner)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: 'path',
+            name: 'id',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Order ID',
+          },
+        ],
+        responses: {
+          200: { description: 'Steps reassigned' },
+          404: { description: 'Order not found' },
+        },
+      },
+    },
     '/api/steps/mine': {
       get: {
         tags: ['Steps'],
@@ -203,19 +224,123 @@ const swaggerSpec = {
       },
     },
     '/api/reports/speed': {
-  get: {
-    tags: ['Reports'],
-    summary: 'Speed report + bottlenecks (owner)',
-    description:
-      'Averages per step type, per staff, per order, plus bottleneck flags and current workload',
-    security: [{ bearerAuth: [] }],
-    responses: {
-      200: { description: 'Speed report' },
-      401: { description: 'Unauthorized' },
-      403: { description: 'Owners only' },
+      get: {
+        tags: ['Reports'],
+        summary: 'Speed report + bottlenecks (owner)',
+        description:
+          'Averages per step type, per staff, per order, plus bottleneck flags and current workload',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: { description: 'Speed report' },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Owners only' },
+        },
+      },
     },
-  },
-},
+
+    // ===== SWIFT AGENT =====
+    '/api/owner/ops-brief': {
+      get: {
+        tags: ['Agent'],
+        summary: 'Owner ops brief (for Swift Agent / dashboard)',
+        description:
+          'Short operational summary: open/overdue orders, slowest step, busiest staff',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'Ops brief',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    text: {
+                      type: 'string',
+                      example:
+                        'Ada Atelier: 7 open orders. 2 overdue. Slowest step: Finishing (avg 2.1 days). Busiest: Tunde (5 tasks).',
+                    },
+                    openOrders: { type: 'integer', example: 7 },
+                    overdueOrders: { type: 'integer', example: 2 },
+                    slowestStep: {
+                      type: 'object',
+                      nullable: true,
+                      properties: {
+                        name: { type: 'string', example: 'Finishing' },
+                        avgDays: { type: 'number', example: 2.1 },
+                      },
+                    },
+                    busiestStaff: {
+                      type: 'object',
+                      nullable: true,
+                      properties: {
+                        name: { type: 'string', example: 'Tunde' },
+                        tasks: { type: 'integer', example: 5 },
+                      },
+                    },
+                    freestStaff: {
+                      type: 'object',
+                      nullable: true,
+                      properties: {
+                        name: { type: 'string', example: 'Bola' },
+                        tasks: { type: 'integer', example: 1 },
+                      },
+                    },
+                    generatedAt: {
+                      type: 'string',
+                      format: 'date-time',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          403: { description: 'Owners only' },
+        },
+      },
+    },
+    '/api/owner/agent/config': {
+      get: {
+        tags: ['Agent'],
+        summary: 'Swift Agent widget config (owner only)',
+        description:
+          'Returns companyId, apiKey, and widgetSrc so the frontend can mount the Swift Agent widget',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'Widget config',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    companyId: {
+                      type: 'string',
+                      example: 'accfc5a7-907a-4009-88e3-b655956aecb3',
+                    },
+                    apiKey: {
+                      type: 'string',
+                      example: 'swa_live_xxx',
+                    },
+                    widgetSrc: {
+                      type: 'string',
+                      example:
+                        'https://widget.swiftagents.org/dist/widget-ui.js',
+                    },
+                    mode: {
+                      type: 'string',
+                      example: 'widget',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Unauthorized' },
+          503: { description: 'Swift Agent not configured on server' },
+        },
+      },
+    },
   },
 };
 
