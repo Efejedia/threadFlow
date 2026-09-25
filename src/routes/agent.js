@@ -7,10 +7,10 @@ const {
   reassignOrder,
 } = require('../controllers/agentController');
 
-const { requireOwner } = require('../middleware/auth');
+const { protect, requireOwner } = require('../middleware/auth');
 
-router.get('/owner/ops-brief', requireOwner, getOpsBrief);
-router.get('/owner/agent/config', requireOwner, getAgentConfig);
-router.post('/orders/:id/assign', requireOwner, reassignOrder);
+router.get('/owner/ops-brief', protect, requireOwner, getOpsBrief);
+router.get('/owner/agent/config', protect, requireOwner, getAgentConfig);
+router.post('/orders/:id/assign', protect, requireOwner, reassignOrder);
 
 module.exports = router;
