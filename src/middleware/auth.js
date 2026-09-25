@@ -12,12 +12,15 @@ exports.protect = async (req, res, next) => {
     const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
     req.auth = decoded;
 
-    if (decoded.type === 'owner') {
+    // Prefer role; fall back to type for older tokens
+    const kind = decoded.role || decoded.type;
+
+    if (kind === 'owner') {
       req.user = await User.findById(decoded.sub);
       if (!req.user) {
         return res.status(401).json({ message: 'User not found' });
       }
-    } else if (decoded.type === 'staff') {
+    } else if (kind === 'staff') {
       req.staff = await Staff.findById(decoded.sub);
       if (!req.staff || !req.staff.isActive) {
         return res.status(401).json({ message: 'Staff not found or inactive' });
@@ -33,14 +36,16 @@ exports.protect = async (req, res, next) => {
 };
 
 exports.requireOwner = (req, res, next) => {
-  if (req.auth?.type !== 'owner') {
+  const kind = req.auth?.role || req.auth?.type;
+  if (kind !== 'owner') {
     return res.status(403).json({ message: 'Owners only' });
   }
   next();
 };
 
 exports.requireStaff = (req, res, next) => {
-  if (req.auth?.type !== 'staff') {
+  const kind = req.auth?.role || req.auth?.type;
+  if (kind !== 'staff') {
     return res.status(403).json({ message: 'Staff only' });
   }
   next();

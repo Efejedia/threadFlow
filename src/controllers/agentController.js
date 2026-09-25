@@ -34,10 +34,10 @@ const getOpsBrief = async (req, res) => {
       Step.find({ studio: studioId }).lean(),
     ]);
 
-    // Open task counts by assignedTo
+    // Open task counts by assignedTo (queued | active only)
     const openCounts = {};
     for (const s of steps) {
-      if (!['assigned', 'in_progress', 'pending'].includes(s.status)) continue;
+      if (!['queued', 'active'].includes(s.status)) continue;
       if (!s.assignedTo) continue;
       const key = String(s.assignedTo);
       openCounts[key] = (openCounts[key] || 0) + 1;
@@ -88,7 +88,7 @@ const getAgentConfig = async (req, res) => {
     const apiKey = process.env.SWIFT_AGENT_API_KEY;
     const widgetSrc =
       process.env.SWIFT_AGENT_WIDGET_SRC ||
-      'https://cdn.swiftagents.org/widget.js';
+      'https://widget.swiftagents.org/dist/widget-ui.js';
 
     if (!companyId || !apiKey) {
       return res.status(503).json({
@@ -131,10 +131,10 @@ const reassignOrder = async (req, res) => {
       isActive: { $ne: false },
     }).lean();
 
-    // Count open tasks per staff
+    // Open = not done yet
     const openSteps = await Step.find({
       studio: studioId,
-      status: { $in: ['pending', 'assigned', 'in_progress'] },
+      status: { $in: ['queued', 'active'] },
     }).lean();
 
     const openCounts = {};
@@ -156,11 +156,11 @@ const reassignOrder = async (req, res) => {
       staff: staffWithLoad,
     });
 
-    // Remove steps that are not done yet, then recreate
+    // Remove steps that are not done
     await Step.deleteMany({
       order: order._id,
       studio: studioId,
-      status: { $in: ['pending', 'assigned'] },
+      status: { $in: ['queued', 'active'] },
     });
 
     const created = await Step.insertMany(
@@ -168,11 +168,10 @@ const reassignOrder = async (req, res) => {
         studio: studioId,
         order: order._id,
         name: s.name,
-        skill: s.skill,
         sequence: s.orderIndex,
         assignedTo: s.assigneeId,
-        status: s.assigneeId ? 'assigned' : 'pending',
-        startedAt: s.assigneeId ? new Date() : null,
+        status: 'queued',
+        startedAt: null,
       }))
     );
 
